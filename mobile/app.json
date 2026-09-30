@@ -16,6 +16,9 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "GAINT Academy uses location only for approved student safety and transport tracking."
       }
-    }
+    },
+    "plugins": [
+      "expo-status-bar"
+    ]
   }
 }
