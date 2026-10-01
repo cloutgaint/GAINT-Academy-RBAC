@@ -16,11 +16,31 @@ DEMO_USERS = [
     ("auditor@gaintacademy.com","System Auditor","Auditor"),
 ]
 
+DEMO_INSTITUTIONS = [
+    (1, "GAINT Demo University", "UNIVERSITY", "GAINT-UNI"),
+    (2, "GAINT Demo School", "SCHOOL", "GAINT-SCHOOL"),
+    (3, "GAINT Demo College", "COLLEGE", "GAINT-COLLEGE"),
+]
+
+ADAPTIVE_ADMIN_USERS = [
+    ("school.admin@gaintacademy.com", "GAINT School Administrator", 2),
+    ("college.admin@gaintacademy.com", "GAINT College Administrator", 3),
+]
+
 def seed(db: Session):
-    institution = db.get(Institution, 1)
-    if not institution:
-        db.add(Institution(id=1, name="GAINT Demo University", institution_type="UNIVERSITY", code="GAINT-DEMO", is_active=True))
-        db.commit()
+    for institution_id, name, institution_type, code in DEMO_INSTITUTIONS:
+        institution = db.get(Institution, institution_id)
+        if not institution:
+            db.add(Institution(
+                id=institution_id, name=name, institution_type=institution_type,
+                code=code, is_active=True
+            ))
+        else:
+            institution.name = name
+            institution.institution_type = institution_type
+            institution.code = code
+            institution.is_active = True
+    db.commit()
 
     for email,name,role in DEMO_USERS:
         user = db.scalar(select(User).where(User.email == email))
@@ -33,6 +53,22 @@ def seed(db: Session):
         else:
             user.name=name
             user.role=role
+    db.commit()
+
+    for email, name, tenant_id in ADAPTIVE_ADMIN_USERS:
+        user = db.scalar(select(User).where(User.email == email))
+        if not user:
+            db.add(User(
+                email=email, name=name, role="Institution Admin",
+                password_hash=hash_password(DEMO_PASSWORD),
+                tenant_id=tenant_id, campus_id=1, is_active=True
+            ))
+        else:
+            user.name = name
+            user.role = "Institution Admin"
+            user.tenant_id = tenant_id
+            user.campus_id = 1
+            user.is_active = True
     db.commit()
 
     parent = db.scalar(select(User).where(User.email=="parent@gaintacademy.com"))
