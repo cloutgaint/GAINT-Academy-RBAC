@@ -1,13 +1,13 @@
 """extend library catalogue and circulation metadata
 
 Revision ID: 20261001_01
-Revises: 20260929_04
+Revises: 20260930_21
 """
 from alembic import op
 import sqlalchemy as sa
 
 revision="20261001_01"
-down_revision="20260929_04"
+down_revision="20260930_21"
 branch_labels=None
 depends_on=None
 
