@@ -2378,6 +2378,8 @@ def admin_inventory_assets(user:User=Depends(require_roles("Institution Admin"))
     inventory=db.scalars(select(CampusInventoryItem).where(CampusInventoryItem.tenant_id==user.tenant_id).order_by(CampusInventoryItem.name)).all()
     assets=db.scalars(select(CampusAsset).where(CampusAsset.tenant_id==user.tenant_id).order_by(CampusAsset.name)).all()
     campuses=db.scalars(select(AcademicUnit).where(AcademicUnit.tenant_id==user.tenant_id,AcademicUnit.unit_type=="CAMPUS",AcademicUnit.status=="Active").order_by(AcademicUnit.name)).all()
+    units=db.scalars(select(AcademicUnit).where(AcademicUnit.tenant_id==user.tenant_id,AcademicUnit.status=="Active").order_by(AcademicUnit.name)).all()
+    unit_map={x.id:x for x in units}
     return {"campuses":[{"id":x.id,"name":x.name,"code":x.code} for x in campuses],"summary":{"inventory_items":len(inventory),"total_quantity":sum(x.quantity for x in inventory),"low_stock":sum(x.quantity<=x.minimum_quantity for x in inventory),"assets":len(assets),"active_assets":sum(x.status=="ACTIVE" for x in assets),"attention_assets":sum(x.condition in {"DAMAGED","REPAIR"} for x in assets)},"inventory":[{"id":x.id,"campus_id":x.campus_id,"name":x.name,"category":x.category,"item_code":x.item_code,"quantity":x.quantity,"minimum_quantity":x.minimum_quantity,"location":x.location,"status":x.status,"notes":x.notes,"low_stock":x.quantity<=x.minimum_quantity} for x in inventory],"assets":[{"id":x.id,"campus_id":x.campus_id,"asset_code":x.asset_code,"name":x.name,"category":x.category,"serial_number":x.serial_number,"location":x.location,"assigned_to":x.assigned_to,"condition":x.condition,"status":x.status,"notes":x.notes} for x in assets]}
 
 @app.post("/api/v1/admin/inventory")
