@@ -2592,6 +2592,23 @@ def admin_library_return(loan_id:int,payload:AdminLibraryReturnIn,user:User=Depe
     audit(db,user,"RETURN","Library Loan",f"loan={row.id};book={book.id};fine={payload.fine_amount}"); db.commit()
     return {"id":row.id,"status":row.status,"returned_at":row.returned_at}
 
+@app.get("/api/v1/library/me")
+def my_library(user:User=Depends(require_roles("Student","Teacher")),db:Session=Depends(get_db)):
+    books=db.scalars(select(LibraryBook).where(LibraryBook.tenant_id==user.tenant_id).order_by(LibraryBook.title)).all()
+    loans=db.scalars(select(LibraryLoan).where(LibraryLoan.tenant_id==user.tenant_id,LibraryLoan.borrower_user_id==user.id).order_by(LibraryLoan.issued_at.desc())).all()
+    book_map={x.id:x for x in books}; now=dt.datetime.utcnow()
+    return {
+        "summary":{
+            "catalogue":len(books),
+            "available":sum(x.status=="Available" for x in books),
+            "active_loans":sum(x.returned_at is None for x in loans),
+            "overdue":sum(x.returned_at is None and x.due_at<now for x in loans),
+            "outstanding_fines":round(sum(float(x.fine_amount or 0) for x in loans if x.fine_status=="Unpaid"),2),
+        },
+        "catalogue":[{"id":x.id,"accession_no":x.accession_no,"isbn":x.isbn,"title":x.title,"author":x.author,"category":x.category,"resource_type":x.resource_type,"publisher":x.publisher,"edition":x.edition,"publication_year":x.publication_year,"language":x.language,"shelf_location":x.shelf_location,"academic_unit_id":x.academic_unit_id,"status":x.status} for x in books],
+        "loans":[{"id":x.id,"book_id":x.book_id,"book_title":book_map[x.book_id].title if x.book_id in book_map else f"Resource #{x.book_id}","resource_type":book_map[x.book_id].resource_type if x.book_id in book_map else "Resource","issued_at":x.issued_at,"due_at":x.due_at,"returned_at":x.returned_at,"fine_amount":float(x.fine_amount or 0),"fine_status":x.fine_status,"return_condition":x.return_condition,"status":x.status,"overdue":x.returned_at is None and x.due_at<now} for x in loans],
+    }
+
 @app.get("/api/v1/admin/transport")
 def admin_transport(user:User=Depends(require_roles("Institution Admin")),db:Session=Depends(get_db)):
     routes=db.scalars(select(TransportRoute).where(TransportRoute.tenant_id==user.tenant_id).order_by(TransportRoute.name)).all()
