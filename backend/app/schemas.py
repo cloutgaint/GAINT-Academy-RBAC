@@ -417,12 +417,26 @@ class AdminLibraryBookIn(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     author: str = Field(default="", max_length=160)
     category: str = Field(default="", max_length=100)
+    resource_type: str = Field(default="Book", max_length=40)
+    publisher: str = Field(default="", max_length=160)
+    edition: str = Field(default="", max_length=60)
+    publication_year: int | None = Field(default=None, ge=1000, le=2100)
+    language: str = Field(default="", max_length=60)
+    shelf_location: str = Field(default="", max_length=80)
+    academic_unit_id: int | None = Field(default=None, ge=1)
 
 class AdminLibraryBookUpdate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     author: str = Field(default="", max_length=160)
     category: str = Field(default="", max_length=100)
     isbn: str | None = Field(default=None, max_length=30)
+    resource_type: str = Field(default="Book", max_length=40)
+    publisher: str = Field(default="", max_length=160)
+    edition: str = Field(default="", max_length=60)
+    publication_year: int | None = Field(default=None, ge=1000, le=2100)
+    language: str = Field(default="", max_length=60)
+    shelf_location: str = Field(default="", max_length=80)
+    academic_unit_id: int | None = Field(default=None, ge=1)
     status: str = Field(default="Available", max_length=30)
 
 
@@ -430,9 +444,12 @@ class AdminLibraryLoanIn(BaseModel):
     book_id: int = Field(ge=1)
     borrower_user_id: int = Field(ge=1)
     due_at: str
+    fine_per_day: float = Field(default=0, ge=0)
 
 class AdminLibraryReturnIn(BaseModel):
     fine_amount: float = Field(default=0, ge=0)
+    return_condition: str = Field(default="Good", max_length=30)
+    fine_status: str = Field(default="Unpaid", max_length=30)
 
 
 class AdminTransportRouteIn(BaseModel):
