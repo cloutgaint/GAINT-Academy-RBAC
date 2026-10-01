@@ -182,7 +182,7 @@ export default function Shell({ user, onLogout, onUserChange }) {
   } else if (user.role === "Institution Admin" && active === "Students") {
     content = <AdminStudents ui={ui} />;
   } else if (user.role === "Institution Admin" && active === "Staff") {
-    content = <StaffManagement />;
+    content = <StaffManagement ui={ui} />;
   } else if (user.role === "Institution Admin" && active === "Institution Setup") {
     content = <InstitutionSetup user={user} onUpdated={(institution) => onUserChange?.({ ...user, institution })} />;
   } else if (user.role === "Institution Admin" && active === "Academic Structure") {
