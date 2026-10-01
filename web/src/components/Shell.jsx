@@ -180,7 +180,7 @@ export default function Shell({ user, onLogout, onUserChange }) {
   } else if (user.role === "Institution Admin" && active === "Reports") {
     content = <AdminReports ui={ui} />;
   } else if (user.role === "Institution Admin" && active === "Students") {
-    content = <AdminStudents />;
+    content = <AdminStudents ui={ui} />;
   } else if (user.role === "Institution Admin" && active === "Staff") {
     content = <StaffManagement />;
   } else if (user.role === "Institution Admin" && active === "Institution Setup") {
