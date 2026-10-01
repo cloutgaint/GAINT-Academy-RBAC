@@ -216,6 +216,13 @@ class LibraryBook(Base):
     title: Mapped[str] = mapped_column(String(200))
     author: Mapped[str] = mapped_column(String(160), default="")
     category: Mapped[str] = mapped_column(String(100), default="")
+    resource_type: Mapped[str] = mapped_column(String(40), default="Book")
+    publisher: Mapped[str] = mapped_column(String(160), default="")
+    edition: Mapped[str] = mapped_column(String(60), default="")
+    publication_year: Mapped[int | None] = mapped_column(nullable=True)
+    language: Mapped[str] = mapped_column(String(60), default="")
+    shelf_location: Mapped[str] = mapped_column(String(80), default="")
+    academic_unit_id: Mapped[int | None] = mapped_column(ForeignKey("academic_units.id"), nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(30), default="Available")
 
 class LibraryLoan(Base):
@@ -229,6 +236,9 @@ class LibraryLoan(Base):
     due_at: Mapped[dt.datetime] = mapped_column(DateTime)
     returned_at: Mapped[dt.datetime | None] = mapped_column(DateTime, nullable=True)
     fine_amount: Mapped[float] = mapped_column(Numeric(12,2), default=0)
+    fine_per_day: Mapped[float] = mapped_column(Numeric(12,2), default=0)
+    return_condition: Mapped[str] = mapped_column(String(30), default="")
+    fine_status: Mapped[str] = mapped_column(String(30), default="Unpaid")
     status: Mapped[str] = mapped_column(String(30), default="Issued")
 
 class TransportRoute(Base):
