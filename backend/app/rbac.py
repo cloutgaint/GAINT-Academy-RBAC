@@ -9,7 +9,7 @@ ROLE_MENUS = {
     "Teacher": [
         "Dashboard", "My Classes", "My Students", "Timetable", "Attendance",
         "Homework", "Assignments", "Exams", "Results", "Teacher Notes",
-        "Communication", "Events", "Leave",
+        "Communication", "Events", "Library", "Leave",
     ],
     "Student": [
         "Dashboard", "My Profile", "Timetable", "Attendance", "Courses",
@@ -76,6 +76,7 @@ PAGE_POLICY = {
         "Teacher Notes": {"create", "update"},
         "Communication": {"create", "message"},
         "Events": {"view"},
+        "Library": {"view"},
         "Leave": {"view", "create"},
     },
     "Student": {
