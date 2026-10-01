@@ -642,3 +642,30 @@ def test_adaptive_institution_admin_demo_accounts_resolve_correct_types():
         assert user["role"] == "Institution Admin"
         assert user["institution"]["institution_type"] == expected_type
         assert user["institution"]["name"] == expected_name
+
+
+def test_school_and_college_full_role_matrix_login_and_tenant_isolation():
+    role_accounts = [
+        ("admin", "Institution Admin"),
+        ("teacher", "Teacher"),
+        ("student", "Student"),
+        ("parent", "Parent / Guardian"),
+        ("accounts", "Accounts"),
+        ("hr", "HR"),
+        ("campus", "Campus Admin"),
+        ("auditor", "Auditor"),
+    ]
+    for prefix, tenant_id, institution_type in [
+        ("school", 2, "SCHOOL"),
+        ("college", 3, "COLLEGE"),
+    ]:
+        for account, expected_role in role_accounts:
+            response = client.post(
+                "/api/v1/auth/login",
+                json={"email": f"{prefix}.{account}@gaintacademy.com", "password": "Password@123"},
+            )
+            assert response.status_code == 200
+            user = response.json()["user"]
+            assert user["role"] == expected_role
+            assert user["tenant_id"] == tenant_id
+            assert user["institution"]["institution_type"] == institution_type
