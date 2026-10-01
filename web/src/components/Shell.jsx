@@ -83,6 +83,7 @@ import AdminEvents from "./AdminEvents";
 import AdminGrievance from "./AdminGrievance";
 import AdminTransport from "./AdminTransport";
 import AdminLibrary from "./AdminLibrary";
+import MyLibrary from "./MyLibrary";
 import AdminHostel from "./AdminHostel";
 import AdminInventoryAssets from "./AdminInventoryAssets";
 import AdminVisitors from "./AdminVisitors";
@@ -217,6 +218,8 @@ export default function Shell({ user, onLogout, onUserChange }) {
     content = <AccountsConcessions ui={ui} />;
   } else if (user.role === "Accounts" && ["Fees","Payments","Receipts","Finance Reports"].includes(active)) {
     content = <AccountsFinance title={active} ui={ui} />;
+  } else if ((user.role === "Student" || user.role === "Teacher") && active === "Library") {
+    content = <MyLibrary ui={ui} />;
   } else if (user.role === "Student" && active === "Fees") {
     content = <StudentFinance ui={ui} />;
   } else if (user.role === "Student" && active === "Results") {
@@ -245,7 +248,7 @@ export default function Shell({ user, onLogout, onUserChange }) {
     content = <StudentAssignedAcademics title={active} ui={ui} />;
   } else if (user.role === "Teacher" && ["My Classes","My Students"].includes(active)) {
     content = <TeacherAcademicWorkspace title={active} ui={ui} />;
-  } else if (user.role === "Student" && ["My Profile","Transport","Library","Events","Grievance"].includes(active)) {
+  } else if (user.role === "Student" && ["My Profile","Transport","Events","Grievance"].includes(active)) {
     content = <StudentAcademicModule title={active} ui={ui} user={user} />;
   } else if (user.role === "Parent / Guardian" && ["My Children","Fees"].includes(active)) {
     content = <ParentChildrenFinance title={active} ui={ui} />;
