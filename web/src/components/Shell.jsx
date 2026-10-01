@@ -124,7 +124,7 @@ export default function Shell({ user, onLogout, onUserChange }) {
   if (active === "Dashboard") {
     content = user.role === "Student" ? <StudentDashboard user={user} ui={ui} /> : user.role === "Parent / Guardian" ? <ParentDashboard ui={ui} /> : user.role === "Accounts" ? <AccountsDashboard ui={ui} /> : user.role === "HR" ? <HRDashboard ui={ui} /> : user.role === "Institution Admin" ? <AdminDashboard ui={ui} /> : <InstitutionRoleDashboard user={user} ui={ui} />;
   } else if (user.role === "Institution Admin" && active === "Admissions") {
-    content = <StudentEnrollment />;
+    content = <StudentEnrollment ui={ui} />;
   } else if (user.role === "Campus Admin" && active === "Reports") {
     content = <CampusReports ui={ui} />;
   } else if (user.role === "Campus Admin" && active === "Grievance") {
