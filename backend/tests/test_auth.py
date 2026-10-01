@@ -627,3 +627,18 @@ def test_campus_student_listing_is_campus_isolated():
     assert rows.status_code==200
     assert all(x["campus_id"]==1 for x in rows.json())
     assert not any(x["email"]=="campus.isolation@test.local" for x in rows.json())
+
+
+def test_adaptive_institution_admin_demo_accounts_resolve_correct_types():
+    cases = [
+        ("admin@gaintacademy.com", "UNIVERSITY", "GAINT Demo University"),
+        ("school.admin@gaintacademy.com", "SCHOOL", "GAINT Demo School"),
+        ("college.admin@gaintacademy.com", "COLLEGE", "GAINT Demo College"),
+    ]
+    for email, expected_type, expected_name in cases:
+        response = client.post("/api/v1/auth/login", json={"email": email, "password": "Password@123"})
+        assert response.status_code == 200
+        user = response.json()["user"]
+        assert user["role"] == "Institution Admin"
+        assert user["institution"]["institution_type"] == expected_type
+        assert user["institution"]["name"] == expected_name
