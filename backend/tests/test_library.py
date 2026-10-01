@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from app.main import app
 from app.database import Base,engine,SessionLocal
-from app.models import Institution,Campus,User,AcademicUnit,LibraryBook,LibraryLoan
+from app.models import Institution,User,AcademicUnit,LibraryBook,LibraryLoan
 from app.security import hash_password
 
 client=TestClient(app); PASSWORD="Test@123"
@@ -17,7 +17,6 @@ def reset_db():
     Base.metadata.drop_all(bind=engine); Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         db.add(Institution(id=1,name="Library School",institution_type="SCHOOL",code="LIB")); db.flush()
-        db.add(Campus(id=1,tenant_id=1,name="Main Campus",code="MAIN")); db.flush()
         db.add_all([
             User(id=1,email="admin@lib.local",name="Admin",role="Institution Admin",password_hash=hash_password(PASSWORD),tenant_id=1,campus_id=1,is_active=True),
             User(id=2,email="student@lib.local",name="Student",role="Student",password_hash=hash_password(PASSWORD),tenant_id=1,campus_id=1,is_active=True),
