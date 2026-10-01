@@ -818,7 +818,9 @@ def campus_transport(user:User=Depends(require_roles("Campus Admin","Institution
     students=db.scalars(select(User).where(User.tenant_id==user.tenant_id,User.id.in_(student_ids))).all() if student_ids else []
     names={x.id:x.name for x in students}
     campuses=db.scalars(select(AcademicUnit).where(AcademicUnit.tenant_id==user.tenant_id,AcademicUnit.unit_type=="CAMPUS",AcademicUnit.status=="Active").order_by(AcademicUnit.name)).all()
-    return {"campuses":[{"id":x.id,"name":x.name,"code":x.code} for x in campuses],"summary":{"routes":len(routes),"active_routes":sum(1 for x in routes if x.status=="Active"),"vehicles":len(vehicles),"active_vehicles":sum(1 for x in vehicles if x.status=="Active"),"allocations":len(allocations)},"routes":[{"id":x.id,"name":x.name,"code":x.code,"status":x.status} for x in routes],"vehicles":[{"id":x.id,"vehicle_number":x.vehicle_number,"label":x.label,"status":x.status} for x in vehicles],"allocations":[{"id":x.id,"student_name":names.get(x.student_user_id,""),"route_name":route_names.get(x.route_id,""),"vehicle_number":vehicle_names.get(x.vehicle_id,"") if x.vehicle_id else "","pickup_time":x.pickup_time,"drop_time":x.drop_time,"status":x.status} for x in allocations]}
+    units=db.scalars(select(AcademicUnit).where(AcademicUnit.tenant_id==user.tenant_id,AcademicUnit.status=="Active").order_by(AcademicUnit.name)).all()
+    unit_map={x.id:x for x in units}
+    return {"campuses":[{"id":x.id,"name":x.name,"code":x.code} for x in campuses],"academic_units":[{"id":x.id,"name":x.name,"code":x.code,"unit_type":x.unit_type} for x in units],"summary":{"routes":len(routes),"active_routes":sum(1 for x in routes if x.status=="Active"),"vehicles":len(vehicles),"active_vehicles":sum(1 for x in vehicles if x.status=="Active"),"allocations":len(allocations)},"routes":[{"id":x.id,"name":x.name,"code":x.code,"status":x.status} for x in routes],"vehicles":[{"id":x.id,"vehicle_number":x.vehicle_number,"label":x.label,"status":x.status} for x in vehicles],"allocations":[{"id":x.id,"student_name":names.get(x.student_user_id,""),"route_name":route_names.get(x.route_id,""),"vehicle_number":vehicle_names.get(x.vehicle_id,"") if x.vehicle_id else "","pickup_time":x.pickup_time,"drop_time":x.drop_time,"status":x.status} for x in allocations]}
 
 @app.get("/api/v1/campus/visitors")
 def campus_visitors(user:User=Depends(require_roles("Campus Admin")),db:Session=Depends(get_db)):
@@ -2526,7 +2528,7 @@ def admin_library(user:User=Depends(require_roles("Institution Admin")),db:Sessi
     borrower_map={x.id:x for x in borrowers}; now=dt.datetime.utcnow()
     eligible=db.scalars(select(User).where(User.tenant_id==user.tenant_id,User.is_active==True,User.role.in_(["Student","Teacher"])).order_by(User.name)).all()
     campuses=db.scalars(select(AcademicUnit).where(AcademicUnit.tenant_id==user.tenant_id,AcademicUnit.unit_type=="CAMPUS",AcademicUnit.status=="Active").order_by(AcademicUnit.name)).all()
-    return {"campuses":[{"id":x.id,"name":x.name,"code":x.code} for x in campuses],"summary":{"books":len(books),"available":sum(x.status=="Available" for x in books),"loans":len(loans),"active_loans":sum(x.returned_at is None for x in loans),"overdue":sum(x.returned_at is None and x.due_at<now for x in loans),"fines":round(sum(float(x.fine_amount or 0) for x in loans),2)},"books":[{"id":x.id,"campus_id":x.campus_id,"accession_no":x.accession_no,"isbn":x.isbn,"title":x.title,"author":x.author,"category":x.category,"status":x.status} for x in books],"loans":[{"id":x.id,"campus_id":x.campus_id,"book_title":book_map[x.book_id].title if x.book_id in book_map else f"Book #{x.book_id}","borrower_name":borrower_map[x.borrower_user_id].name if x.borrower_user_id in borrower_map else f"User #{x.borrower_user_id}","borrower_role":borrower_map[x.borrower_user_id].role if x.borrower_user_id in borrower_map else "Unknown","issued_at":x.issued_at,"due_at":x.due_at,"returned_at":x.returned_at,"fine_amount":float(x.fine_amount or 0),"status":x.status,"overdue":x.returned_at is None and x.due_at<now} for x in loans],"borrowers":[{"id":x.id,"name":x.name,"role":x.role,"campus_id":x.campus_id} for x in eligible]}
+    return {"campuses":[{"id":x.id,"name":x.name,"code":x.code} for x in campuses],"summary":{"books":len(books),"available":sum(x.status=="Available" for x in books),"loans":len(loans),"active_loans":sum(x.returned_at is None for x in loans),"overdue":sum(x.returned_at is None and x.due_at<now for x in loans),"fines":round(sum(float(x.fine_amount or 0) for x in loans),2)},"books":[{"id":x.id,"campus_id":x.campus_id,"accession_no":x.accession_no,"isbn":x.isbn,"title":x.title,"author":x.author,"category":x.category,"resource_type":x.resource_type,"publisher":x.publisher,"edition":x.edition,"publication_year":x.publication_year,"language":x.language,"shelf_location":x.shelf_location,"academic_unit_id":x.academic_unit_id,"academic_unit_name":unit_map[x.academic_unit_id].name if x.academic_unit_id in unit_map else "","status":x.status} for x in books],"loans":[{"id":x.id,"campus_id":x.campus_id,"book_title":book_map[x.book_id].title if x.book_id in book_map else f"Book #{x.book_id}","borrower_name":borrower_map[x.borrower_user_id].name if x.borrower_user_id in borrower_map else f"User #{x.borrower_user_id}","borrower_role":borrower_map[x.borrower_user_id].role if x.borrower_user_id in borrower_map else "Unknown","issued_at":x.issued_at,"due_at":x.due_at,"returned_at":x.returned_at,"fine_amount":float(x.fine_amount or 0),"status":x.status,"overdue":x.returned_at is None and x.due_at<now} for x in loans],"borrowers":[{"id":x.id,"name":x.name,"role":x.role,"campus_id":x.campus_id} for x in eligible]}
 
 @app.post("/api/v1/admin/library/books")
 def admin_library_book_create(payload:AdminLibraryBookIn,user:User=Depends(require_roles("Institution Admin")),db:Session=Depends(get_db)):
@@ -2534,7 +2536,9 @@ def admin_library_book_create(payload:AdminLibraryBookIn,user:User=Depends(requi
     if not campus_exists: raise HTTPException(404,"Campus not found in this institution")
     accession=payload.accession_no.strip()
     if db.scalar(select(LibraryBook.id).where(LibraryBook.tenant_id==user.tenant_id,LibraryBook.accession_no==accession)): raise HTTPException(409,"Accession number already exists")
-    row=LibraryBook(tenant_id=user.tenant_id,campus_id=payload.campus_id,accession_no=accession,isbn=payload.isbn.strip() if payload.isbn else None,title=payload.title.strip(),author=payload.author.strip(),category=payload.category.strip())
+    unit=db.get(AcademicUnit,payload.academic_unit_id) if payload.academic_unit_id else None
+    if unit and unit.tenant_id!=user.tenant_id: raise HTTPException(400,"Academic unit does not belong to this institution")
+    row=LibraryBook(tenant_id=user.tenant_id,campus_id=payload.campus_id,accession_no=accession,isbn=payload.isbn.strip() if payload.isbn else None,title=payload.title.strip(),author=payload.author.strip(),category=payload.category.strip(),resource_type=payload.resource_type.strip(),publisher=payload.publisher.strip(),edition=payload.edition.strip(),publication_year=payload.publication_year,language=payload.language.strip(),shelf_location=payload.shelf_location.strip(),academic_unit_id=unit.id if unit else None)
     db.add(row); audit(db,user,"CREATE","Library Book",f"{row.accession_no}:{row.title}"); db.commit(); db.refresh(row)
     return {"id":row.id,"accession_no":row.accession_no,"status":row.status}
 
@@ -2547,7 +2551,9 @@ def admin_library_book_update(book_id:int,payload:AdminLibraryBookUpdate,user:Us
     active_loan=db.scalar(select(LibraryLoan.id).where(LibraryLoan.tenant_id==user.tenant_id,LibraryLoan.book_id==row.id,LibraryLoan.returned_at.is_(None)))
     if active_loan and status!="Issued": raise HTTPException(409,"A book with an active loan must remain Issued")
     if not active_loan and status=="Issued": raise HTTPException(409,"Use the circulation workflow to mark a book as Issued")
-    row.title=payload.title.strip(); row.author=payload.author.strip(); row.category=payload.category.strip(); row.isbn=payload.isbn.strip() if payload.isbn else None; row.status=status
+    unit=db.get(AcademicUnit,payload.academic_unit_id) if payload.academic_unit_id else None
+    if unit and unit.tenant_id!=user.tenant_id: raise HTTPException(400,"Academic unit does not belong to this institution")
+    row.title=payload.title.strip(); row.author=payload.author.strip(); row.category=payload.category.strip(); row.isbn=payload.isbn.strip() if payload.isbn else None; row.resource_type=payload.resource_type.strip(); row.publisher=payload.publisher.strip(); row.edition=payload.edition.strip(); row.publication_year=payload.publication_year; row.language=payload.language.strip(); row.shelf_location=payload.shelf_location.strip(); row.academic_unit_id=unit.id if unit else None; row.status=status
     audit(db,user,"UPDATE","Library Book",f"{row.accession_no}:{status}"); db.commit()
     return {"id":row.id,"status":row.status}
 
@@ -2563,7 +2569,10 @@ def admin_library_issue(payload:AdminLibraryLoanIn,user:User=Depends(require_rol
     if not due or due<=dt.datetime.utcnow(): raise HTTPException(400,"Due date must be in the future")
     active=db.scalar(select(LibraryLoan.id).where(LibraryLoan.tenant_id==user.tenant_id,LibraryLoan.book_id==book.id,LibraryLoan.returned_at.is_(None)))
     if active: raise HTTPException(409,"Book already has an active loan")
-    row=LibraryLoan(tenant_id=user.tenant_id,campus_id=book.campus_id,book_id=book.id,borrower_user_id=borrower.id,due_at=due,status="Issued")
+    active_for_borrower=db.scalars(select(LibraryLoan).where(LibraryLoan.tenant_id==user.tenant_id,LibraryLoan.borrower_user_id==borrower.id,LibraryLoan.returned_at.is_(None))).all()
+    limit=5 if borrower.role=="Teacher" else 3
+    if len(active_for_borrower)>=limit: raise HTTPException(409,f"Borrower has reached the active loan limit of {limit}")
+    row=LibraryLoan(tenant_id=user.tenant_id,campus_id=book.campus_id,book_id=book.id,borrower_user_id=borrower.id,due_at=due,fine_per_day=payload.fine_per_day,status="Issued")
     book.status="Issued"; db.add(row); audit(db,user,"ISSUE","Library Loan",f"book={book.id};borrower={borrower.id}"); db.commit(); db.refresh(row)
     return {"id":row.id,"status":row.status,"due_at":row.due_at}
 
@@ -2574,7 +2583,12 @@ def admin_library_return(loan_id:int,payload:AdminLibraryReturnIn,user:User=Depe
     if row.returned_at is not None: raise HTTPException(409,"Book has already been returned")
     book=db.scalar(select(LibraryBook).where(LibraryBook.id==row.book_id,LibraryBook.tenant_id==user.tenant_id))
     if not book: raise HTTPException(409,"Loan book record is unavailable")
-    row.returned_at=dt.datetime.utcnow(); row.fine_amount=payload.fine_amount; row.status="Returned"; book.status="Available"
+    row.returned_at=dt.datetime.utcnow()
+    overdue_days=max(0,(row.returned_at.date()-row.due_at.date()).days)
+    calculated=round(overdue_days*float(row.fine_per_day or 0),2)
+    row.fine_amount=max(payload.fine_amount,calculated); row.return_condition=payload.return_condition.strip().title(); row.fine_status=payload.fine_status.strip().title()
+    if row.fine_status not in {"Unpaid","Paid","Waived"}: raise HTTPException(400,"Invalid fine status")
+    row.status="Returned"; book.status="Damaged" if row.return_condition=="Damaged" else "Available"
     audit(db,user,"RETURN","Library Loan",f"loan={row.id};book={book.id};fine={payload.fine_amount}"); db.commit()
     return {"id":row.id,"status":row.status,"returned_at":row.returned_at}
 
